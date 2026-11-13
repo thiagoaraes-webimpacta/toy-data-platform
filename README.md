@@ -185,8 +185,11 @@ resposta — é o *context engineering* da aula. Para ligar um cliente MCP de ve
 | `count_titles` | quantidade de títulos distintos |
 | `avg_rating` | nota média da crítica |
 | `total_votes` | total de votos da crítica |
+| `avg_years_to_netflix` | média de anos entre o lançamento e a entrada na Netflix |
+| `count_catalog_titles` | títulos que entraram com mais de 5 anos de lançamento |
+| `share_catalog_titles` | fração (0 a 1) de títulos de catálogo |
 
-Dimensões: `release_year`, `title_type`, `genre`, `country`.
+Dimensões: `release_year`, `added_year`, `catalog_age_band`, `title_type`, `genre`, `country`.
 
 O modelo semântico é YAML versionado em `cube/model/` — a medida é definida **uma vez
 só**, no cubo `titles`, e a view `titles_overview` é a fachada plana que o Superset e
@@ -197,9 +200,7 @@ gênero/país sem inflar as medidas).
 
 Roteiro de 5 minutos para rodar com o stack no ar, antes de entrar na sala:
 
-1. **Ingerir** as duas fontes do dbt:
-   `make dlt-run DLT_TABLE=netflix_titles` → `8807` linhas, e
-   `make dlt-run DLT_TABLE=meta_critic` → `16290` linhas, em `raw.raw_movies`.
+1. **Ingerir:** `make dlt-run DLT_TABLE=netflix_titles` → `8807` linhas em `raw.raw_movies.netflix_titles`.
 2. **Transformar:** `make dbt-build` → `Done. PASS=45`, e `refined.ml.fct_titles` com `1813` linhas = `1813` chaves distintas.
 3. **Camada semântica:**
    ```bash

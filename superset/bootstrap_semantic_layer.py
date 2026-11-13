@@ -65,6 +65,28 @@ METRICS = [
         "metric_type": "sum",
         "description": "Soma dos votos recebidos.",
     },
+    # --- idade do catálogo (medidas novas do cubo `titles`)
+    {
+        "metric_name": "avg_years_to_netflix",
+        "verbose_name": "Anos até a Netflix (média)",
+        "expression": "MEASURE(avg_years_to_netflix)",
+        "metric_type": "avg",
+        "description": "Média de anos entre o lançamento e a entrada na Netflix.",
+    },
+    {
+        "metric_name": "count_catalog_titles",
+        "verbose_name": "Títulos de catálogo (>5 anos)",
+        "expression": "MEASURE(count_catalog_titles)",
+        "metric_type": "count_distinct",
+        "description": "Títulos que entraram com mais de 5 anos de lançamento.",
+    },
+    {
+        "metric_name": "share_catalog_titles",
+        "verbose_name": "% títulos de catálogo",
+        "expression": "MEASURE(share_catalog_titles)",
+        "metric_type": "number",
+        "description": "Fração (0 a 1) dos títulos que entraram com mais de 5 anos.",
+    },
 ]
 
 DASHBOARD_TITLE = "Camada semântica — títulos"
@@ -211,6 +233,15 @@ class SupersetApi:
         if not response.ok:
             raise SystemExit(f"Falha ao atualizar {resource}/{pk}: {response.text}")
 
+    def refresh_dataset(self, dataset_id: int) -> None:
+        """Relê as colunas da fonte (aqui, as dimensões da view do Cube)."""
+        response = self.session.put(
+            f"{self.base_url}/api/v1/dataset/{dataset_id}/refresh",
+            headers=self.write_headers(),
+        )
+        if not response.ok:
+            raise SystemExit(f"Falha ao sincronizar dataset/{dataset_id}: {response.text}")
+
     def delete(self, resource: str) -> None:
         response = self.session.delete(
             f"{self.base_url}/api/v1/{resource}", headers=self.write_headers()
@@ -257,7 +288,11 @@ def ensure_dataset(api: SupersetApi, database_id: int) -> int:
             },
         )
         print(f"dataset: criado id={dataset_id}")
-        trim_internal_columns(api, dataset_id)
+    # Dimensão nova no Cube = coluna nova na "tabela" titles_overview. Sem o refresh,
+    # um dataset criado antes da mudança não enxerga `added_year`/`catalog_age_band`.
+    api.refresh_dataset(dataset_id)
+    print(f"dataset: colunas sincronizadas com o Cube (id={dataset_id})")
+    trim_internal_columns(api, dataset_id)
     metrics = with_existing_metric_ids(api, dataset_id)
     api.update("dataset", dataset_id, {"metrics": metrics})
     return dataset_id

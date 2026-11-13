@@ -57,6 +57,27 @@ QUESTIONS: dict[str, dict[str, Any]] = {
         "limit": 1000,
         "rank_by": None,
     },
+    # Pergunta do trabalho, parte 1: a Netflix passou a licenciar títulos antigos?
+    "Depois de 2016 a Netflix passou a colocar mais títulos antigos no catálogo?": {
+        "measures": [
+            member("count_titles"),
+            member("share_catalog_titles"),
+            member("avg_years_to_netflix"),
+        ],
+        "dimensions": [member("added_year")],
+        "filters": [
+            {"member": member("added_year"), "operator": "gte", "values": ["2016"]},
+        ],
+        "limit": 1000,
+        "rank_by": None,
+    },
+    # Pergunta do trabalho, parte 2: e esses títulos antigos têm nota melhor?
+    "Títulos mais antigos ao entrar na Netflix têm nota da crítica melhor?": {
+        "measures": [member("count_titles"), member("avg_rating")],
+        "dimensions": [member("catalog_age_band")],
+        "limit": 1000,
+        "rank_by": None,
+    },
 }
 
 
@@ -130,7 +151,8 @@ def run(question: str) -> int:
 
                 rank_by = plan["rank_by"]
                 if rank_by is None:
-                    _print_table(columns, rows)
+                    # Sem ranking, a leitura natural é na ordem da dimensão (ano, faixa).
+                    _print_table(columns, sorted(rows, key=lambda row: str(row[0])))
                     return 0
 
                 # O contrato governado é medidas × dimensões (+ filtros, limite):

@@ -42,6 +42,18 @@ cubes:
         sql: type_key
         type: string
 
+      - name: added_year
+        description: Ano em que o título entrou no catálogo da Netflix.
+        sql: added_year
+        type: number
+
+      - name: catalog_age_band
+        description: >
+          Idade do título ao entrar na Netflix, em faixas
+          (lançamento 0-1 ano, recente 2-5, catálogo 6-15, clássico 16+).
+        sql: catalog_age_band
+        type: string
+
     measures:
       - name: count_titles
         description: Quantidade de títulos distintos.
@@ -57,3 +69,24 @@ cubes:
         description: Total de votos da crítica.
         type: sum
         sql: votes
+
+      # --- idade do catálogo (pergunta: a Netflix passou a licenciar títulos antigos?)
+      - name: avg_years_to_netflix
+        description: Média de anos entre o lançamento e a entrada na Netflix.
+        type: avg
+        sql: years_to_netflix
+
+      - name: count_catalog_titles
+        description: Títulos que entraram na Netflix com mais de 5 anos de lançamento.
+        type: count_distinct
+        sql: title_key
+        filters:
+          - sql: "{CUBE}.years_to_netflix > 5"
+
+      # Medida derivada: definida a partir de duas medidas governadas, então a regra
+      # ("título de catálogo" = mais de 5 anos) existe em um lugar só.
+      - name: share_catalog_titles
+        description: >
+          Fração (0 a 1) dos títulos que entraram com mais de 5 anos de lançamento.
+        type: number
+        sql: "CAST({count_catalog_titles} AS DOUBLE) / NULLIF({count_titles}, 0)"

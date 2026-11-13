@@ -4,7 +4,8 @@ views:
   - name: titles_overview
 
     description: >
-      Medidas de títulos fatiáveis por ano, tipo, gênero e país. Uma medida só é
+      Medidas de títulos fatiáveis por ano de lançamento, ano de entrada na Netflix,
+      faixa de idade no catálogo, tipo, gênero e país. Uma medida só é
       definida uma vez (no cubo `titles`); a view apenas a expõe.
 
     cubes:
@@ -12,9 +13,14 @@ views:
         includes:
           - release_year
           - title_type
+          - added_year
+          - catalog_age_band
           - count_titles
           - avg_rating
           - total_votes
+          - avg_years_to_netflix
+          - count_catalog_titles
+          - share_catalog_titles
 
       - join_path: titles.title_genre
         includes:
